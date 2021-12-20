@@ -1,0 +1,11 @@
+Given than in production we can have more than 5000 offers for one offer request. What persistence strategy do you suggest for offers ? Explain why.
+
+We have to limit the number of entry in our database and try to keep the minimum and most used research.
+The first thing is to make sure to remove offers that are outdated from the database, and define first what outdated means (it's possible that we need past offers to show history on the UI). 
+We can also remove offers that were not query for a long time, and then re-fetch them from providers APIs when we need them. It depends if those APIs are fast or not and how long the customer visiting Ulysse.com can be kept waiting.
+It's possible to use a clustered database and have the data replicate only on some nodes. Like we can have 7 nodes and each key is replicate on 3 nodes. It divides the number of key for each instance of the database and helps the availability of the application. If one node is down, the key that we get is still fetchable on 2 nodes.
+If we have a lot of RAM and we distribute our backend, we can use ETS tables and dump on backup files the content of those ETS when we shutdown the backend. But if we have too much offer requests that will be too much of RAM usage and charging / dumping those ETS on startup / shutdown will be a too long.
+
+We now want to deploy the app we just created on multiple servers that are connected together using distributed erlang. Which parts of the code will require an update and why ?
+
+Everything that fetch data from providers APIs need to run only on one node, because we don't want each node to fetch the same data. We can have a list of providers for each node to have them only fetch those APIs. Each instance of the GenServer holding a list of offers has to run only on one node too. Basically everything data related needs to be handle by one node. Every put/update and every get can be manage by one node.
